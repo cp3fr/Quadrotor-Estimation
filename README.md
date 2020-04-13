@@ -94,6 +94,13 @@ For the controls project, the simulator was working with a perfect set of sensor
 NOTE: Your answer should match the settings in `SimulatedSensors.txt`, where you can also grab the simulated noise parameters for all the other sensors.
 
 
+   __Response:__ In the `src/compute_measured_std.ipynb`, based on GPS and IMU sensor measurements for about 8 seconds, I computed the means and standard deviations for GPS (M=-0.016, SD=0.724) and IMU (M=0.002, SD=0.510). In order to capture small biases in the sensor readings, I adjusted the measured standard deviations by the mean:
+
+   __SD_adjusted = abs(M) + SD__ 
+
+   The SD_adjusted for GPS was 0.74 and for IMU 0.51. Plugging these values in `config/06_SensorNoise.txt` into `MeasuredStdDev_GPSPosXY` and `MeasuredStdDev_AccelXY` and running the scenario resulted in success.
+
+
 ### Step 2: Attitude Estimation ###
 
 Now let's look at the first step to our state estimation: including information from our IMU.  In this step, you will be improving the complementary filter-type attitude filter with a better rate gyro attitude integration scheme.
@@ -114,6 +121,13 @@ In the screenshot above the attitude estimation using linear scheme (left) and u
 **Hint: see section 7.1.2 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj) for a refresher on a good non-linear complimentary filter for attitude using quaternions.**
 
 
+   __Response:__ I have implemented the equations layed out in 7.1.2 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj). I have created a quaterion `qt` from euler angles from current state estimates `rollEst`, `pitchEst`, `ekfState(6)` (for yaw). Next, i have created a quaternion `dq` from IMU measurements by integrating them first to obtain the measured roll, pitch, and yaw angles in body frame. Next i computed the predicted quaterion `q_bar` as follows:
+
+   __q_bar = dq * qt__
+
+   and extracted the updated predicted roll, pitch, and yaw angles used for the complementary filter.
+
+
 ### Step 3: Prediction Step ###
 
 In this next step you will be implementing the prediction step of your filter.
@@ -121,12 +135,6 @@ In this next step you will be implementing the prediction step of your filter.
 
 1. Run scenario `08_PredictState`.  This scenario is configured to use a perfect IMU (only an IMU). Due to the sensitivity of double-integration to attitude errors, we've made the accelerometer update very insignificant (`QuadEstimatorEKF.attitudeTau = 100`).  The plots on this simulation show element of your estimated state and that of the true state.  At the moment you should see that your estimated state does not follow the true state.
 
-      __Response:__ In the `src/compute_measured_std.ipynb`, based on GPS and IMU sensor measurements for about 8 seconds, I computed the means and standard deviations for GPS (M=-0.016, SD=0.724) and IMU (M=0.002, SD=0.510). In order to capture small biases in the sensor readings, I adjusted the measured standard deviations by the mean:
-
-      __SD_adjusted = abs(M) + SD__ 
-
-      The SD_adjusted for GPS was 0.74 and for IMU 0.51. Plugging these values in `config/06_SensorNoise.txt` into `MeasuredStdDev_GPSPosXY` and `MeasuredStdDev_AccelXY` and running the scenario resulted in success.
-      
 
 2. In `QuadEstimatorEKF.cpp`, implement the state prediction step in the `PredictState()` functon. If you do it correctly, when you run scenario `08_PredictState` you should see the estimator state track the actual state, with only reasonably slow drift, as shown in the figure below:
 
