@@ -121,6 +121,13 @@ In this next step you will be implementing the prediction step of your filter.
 
 1. Run scenario `08_PredictState`.  This scenario is configured to use a perfect IMU (only an IMU). Due to the sensitivity of double-integration to attitude errors, we've made the accelerometer update very insignificant (`QuadEstimatorEKF.attitudeTau = 100`).  The plots on this simulation show element of your estimated state and that of the true state.  At the moment you should see that your estimated state does not follow the true state.
 
+      __Response:__ In the `src/compute_measured_std.ipynb`, based on GPS and IMU sensor measurements for about 8 seconds, I computed the means and standard deviations for GPS (M=-0.016, SD=0.724) and IMU (M=0.002, SD=0.510). In order to capture small biases in the sensor readings, I adjusted the measured standard deviations by the mean:
+
+      __SD_adjusted = abs(M) + SD__ 
+
+      The SD_adjusted for GPS was 0.74 and for IMU 0.51. Plugging these values in `config/06_SensorNoise.txt` into `MeasuredStdDev_GPSPosXY` and `MeasuredStdDev_AccelXY` and running the scenario resulted in success.
+      
+
 2. In `QuadEstimatorEKF.cpp`, implement the state prediction step in the `PredictState()` functon. If you do it correctly, when you run scenario `08_PredictState` you should see the estimator state track the actual state, with only reasonably slow drift, as shown in the figure below:
 
 ![predict drift](images/predict-slow-drift.png)
