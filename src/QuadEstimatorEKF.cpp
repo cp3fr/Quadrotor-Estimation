@@ -88,11 +88,12 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
   //    2) use the Quaternion<float> class, which has a handy FromEuler123_RPY function for creating a quaternion from Euler Roll/PitchYaw
   //       (Quaternion<float> also has a IntegrateBodyRate function, though this uses quaternions, not Euler angles)
 
-  ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-  // SMALL ANGLE GYRO INTEGRATION:
-  // (replace the code below)
-  // make sure you comment it out when you add your own code -- otherwise e.g. you might integrate yaw twice
-
+    ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+    
+//  // SMALL ANGLE GYRO INTEGRATION:
+//  // (replace the code below)
+//  // make sure you comment it out when you add your own code -- otherwise e.g. you might integrate yaw twice
+//
 //  float predictedPitch = pitchEst + dtIMU * gyro.y;
 //  float predictedRoll = rollEst + dtIMU * gyro.x;
 //  ekfState(6) = ekfState(6) + dtIMU * gyro.z;	// yaw
@@ -100,6 +101,15 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
 //  // normalize yaw to -pi .. pi
 //  if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
 //  if (ekfState(6) < -F_PI) ekfState(6) += 2.f*F_PI;
+//
+//  // normalize yaw to -pi .. pi
+//  if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
+//  if (ekfState(6) < -F_PI) ekfState(6) += 2.f*F_PI;
+    
+    /////////////////////////////// END STUDENT CODE ////////////////////////////
+    
+    
+    ////////////////////////////// BEGIN STUDENT SOLUTION ///////////////////////////
     
     Quaternion<float> qt = qt.FromEuler123_RPY(rollEst, pitchEst, ekfState(6));
 
@@ -119,7 +129,7 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
     if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
     if (ekfState(6) < -F_PI) ekfState(6) += 2.f*F_PI;
 
-  /////////////////////////////// END STUDENT CODE ////////////////////////////
+  /////////////////////////////// END STUDENT SOLUTION ////////////////////////////
 
   // CALCULATE UPDATE
   accelRoll = atan2f(accel.y, accel.z);
@@ -179,9 +189,80 @@ VectorXf QuadEstimatorEKF::PredictState(VectorXf curState, float dt, V3F accel, 
   Quaternion<float> attitude = Quaternion<float>::FromEuler123_RPY(rollEst, pitchEst, curState(6));
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-
-
+    
+    
   /////////////////////////////// END STUDENT CODE ////////////////////////////
+    
+  ////////////////////////////// BEGIN STUDENT SOLUTION ///////////////////////////
+    
+    // transform accelerations from body to world frame
+    V3F w;
+    w = attitude.Rotate_BtoI(V3F(accel.x, accel.y, accel.z));
+    
+    // forward the state
+    predictedState(0) += predictedState(3) * dt + w.x * dt * dt;
+    predictedState(1) += predictedState(4) * dt + w.y * dt * dt;
+    predictedState(2) += predictedState(5) * dt + (w.z - CONST_GRAVITY) * dt * dt;
+    predictedState(3) += w.x * dt;
+    predictedState(4) += w.y * dt;
+    predictedState(5) += (w.z - CONST_GRAVITY) * dt;
+    predictedState(6) = ekfState(6);
+    
+
+
+    
+//    // DRAFT
+    
+    //    VectorXf u(4);
+    //    u(0) = accel.x;
+    //    u(1) = accel.y;
+    //    u(2) = accel.z;
+    //    u(3) = gyro.z;
+    
+//    float phi = rollEst;
+//    float theta = pitchEst;
+//    float psi = curState(6);
+//
+//    MatrixXf Rbg(3,3);
+//    Rbg(0,0) = cos(theta) * cos(psi);
+//    Rbg(0,1) = sin(phi) * sin(theta) * cos(psi) - cos(phi) * sin(psi);
+//    Rbg(0,2) = cos(phi) * sin(theta) * cos(psi) + sin(phi) * sin(psi);
+//    Rbg(1,0) = cos(theta) * sin(psi);
+//    Rbg(1,1) = sin(phi) * sin(theta) * sin(psi) + cos(phi) * cos(psi);
+//    Rbg(1,2) = cos(phi) * sin(theta) * sin(psi) - sin(phi) * cos(psi);
+//    Rbg(2,0) = -sin(theta);
+//    Rbg(2,1) = cos(theta) * sin(phi);
+//    Rbg(2,2) = cos(theta) * cos(phi);
+//
+//    VectorXf a(7);
+//    a(0) = curState(0) + curState(3) * dt;
+//    a(1) = curState(1) + curState(4) * dt;
+//    a(2) = curState(2) + curState(5) * dt;
+//    a(3) = curState(3);
+//    a(4) = curState(4);
+//    a(5) = curState(5) + CONST_GRAVITY * dt;
+//    a(6) = curState(6);
+//
+//    MatrixXf b(7,4);
+//    b.setZero();
+//    b(3,0) = Rbg(0,0);
+//    b(3,1) = Rbg(0,1);
+//    b(3,2) = Rbg(0,2);
+//    b(4,0) = Rbg(1,0);
+//    b(4,1) = Rbg(1,1);
+//    b(4,2) = Rbg(1,2);
+//    b(5,0) = Rbg(2,0);
+//    b(5,1) = Rbg(2,1);
+//    b(5,2) = Rbg(2,2);
+//    b(7,4) = 1;
+//
+//    VectorXf g(7);
+//    g = a + b * dt;
+//
+//    // COMPUTE JACOBIAN G'
+//    MatrixXf J(7,7);
+    
+  /////////////////////////////// END STUDENT SOLUTION ////////////////////////////
 
   return predictedState;
 }
