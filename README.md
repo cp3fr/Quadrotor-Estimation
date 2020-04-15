@@ -200,7 +200,7 @@ The resulting output in scenario `09_PredictionCov` captures the increasing cova
 [ADD GIF]
 
 
-Finally, I tuned the process parameters and obtained the following result:
+Finally, I tuned the process parameters `QPosXYStd` = 0.05 and `QVelXYStd` = 0.20, to obtain reasonable growth of covariances in `09_PredictionCov`:
 
 [ADD GIF]
 
@@ -225,6 +225,15 @@ Up until now we've only used the accelerometer and gyro for our state estimation
 **Hint: after implementing the magnetometer update, you may have to once again tune the parameter `QYawStd` to better balance between the long term drift and short-time noise from the magnetometer.**
 
 **Hint: see section 7.3.2 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj) for a refresher on the magnetometer update.**
+
+
+#### Step 4: Solution ####
+
+The function `UpdateFromMag()` uses the yaw angle in world frame from magnetometer readings `magYaw` to update the estimated yaw `ekfState(6)` via an EKF update step. I normalized the distance between magnetometer and estimated yaw to -pi .. pi range by changing the magnetometer yaw value. Then, i set the derivative matrix hPrime. 
+
+After that, i tuned the `QYawStd` parameter to 0.08 to capture about 68% of the error covariance.
+
+[ADD GIF]
 
 
 ### Step 5: Closed Loop + GPS Update ###
