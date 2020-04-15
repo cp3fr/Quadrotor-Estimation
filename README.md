@@ -285,6 +285,14 @@ Up to this point, we have been working with a controller that has been relaxed t
 ***Success criteria:*** *Your objective is to complete the entire simulation cycle with estimated position error of < 1m.*
 
 
+### Step 6: Solution ###
+
+Replacing `QuadController.cpp` and `QuadControlParmas.txt` with my code developed in the previous project immediately achieved the performance requirements:
+
+[ADD GIF]
+
+
+
 ## Tips and Tricks ##
 
  - When it comes to transposing matrices, `.transposeInPlace()` is the function you want to use to transpose a matrix
