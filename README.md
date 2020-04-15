@@ -94,7 +94,7 @@ For the controls project, the simulator was working with a perfect set of sensor
 NOTE: Your answer should match the settings in `SimulatedSensors.txt`, where you can also grab the simulated noise parameters for all the other sensors.
 
 
-#### Step 1: Solution ####
+### Step 1: Solution ###
 
 Using a jupyter notebook python script (`src/compute_measured_std.ipynb`), i computed means and standard deviations of GPS and IMU recordings in `config/log/`. For GPS I observed a slight bias, that is an offset of the mean from zero. In order to take into account this bias, I adjusted the measured standard deviations by the mean using the formula: __SD_adjusted = abs(M) + SD__ 
 
@@ -123,7 +123,7 @@ In the screenshot above the attitude estimation using linear scheme (left) and u
 **Hint: see section 7.1.2 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj) for a refresher on a good non-linear complimentary filter for attitude using quaternions.**
 
 
-#### Step 2: Solution ####
+### Step 2: Solution ###
 
 I decided to implement the equation from section 7.1.2 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj): __qt_bar = dq * qt__. 
 
@@ -181,7 +181,7 @@ Another set of bad examples is shown below for having a `QVelXYStd` too large (f
 ***Success criteria:*** *This step doesn't have any specific measurable criteria being checked.*
 
 
-#### Step 3: Solution ####
+### Step 3: Solution ###
 
 The prediction step is broken down in several functions.
 
@@ -227,7 +227,7 @@ Up until now we've only used the accelerometer and gyro for our state estimation
 **Hint: see section 7.3.2 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj) for a refresher on the magnetometer update.**
 
 
-#### Step 4: Solution ####
+### Step 4: Solution ###
 
 The function `UpdateFromMag()` uses the yaw angle in world frame from magnetometer readings `magYaw` to update the estimated yaw `ekfState(6)` via an EKF update step. I normalized the distance between magnetometer and estimated yaw to -pi .. pi range by changing the magnetometer yaw value. Then, i set the derivative matrix hPrime. 
 
@@ -259,6 +259,16 @@ After that, i tuned the `QYawStd` parameter to 0.08 to capture about 68% of the 
 **Hint: see section 7.3.1 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj) for a refresher on the GPS update.**
 
 At this point, congratulations on having a working estimator!
+
+
+### Step 5: Solution ###
+
+In the `UpdateFromGPS()` function the state estimation of position and velocity are updated by GPS measurements, using an EKF update step. I had to set the partial derivative matrix as identity matrix augmented with a vector of zeros.
+
+Subsequent tuning of `QPosZStd` = 0.15 and `QVelZStd` = 0.15 showed satisfying results:
+
+[ADD GIF]
+
 
 ### Step 6: Adding Your Controller ###
 
