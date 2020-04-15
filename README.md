@@ -94,11 +94,13 @@ For the controls project, the simulator was working with a perfect set of sensor
 NOTE: Your answer should match the settings in `SimulatedSensors.txt`, where you can also grab the simulated noise parameters for all the other sensors.
 
 
-   __Response:__ In the `src/compute_measured_std.ipynb`, based on GPS and IMU sensor measurements for about 8 seconds, I computed the means and standard deviations for GPS (M=-0.016, SD=0.724) and IMU (M=0.002, SD=0.510). In order to capture small biases in the sensor readings, I adjusted the measured standard deviations by the mean:
+#### Step 1: Solution ####
 
-   __SD_adjusted = abs(M) + SD__ 
+Using a jupyter notebook python script (`src/compute_measured_std.ipynb`), i computed means and standard deviations of GPS and IMU recordings in `config/log/`. For GPS I observed a slight bias, that is an offset of the mean from zero. In order to take into account this bias, I adjusted the measured standard deviations by the mean using the formula: __SD_adjusted = abs(M) + SD__ 
 
-   The SD_adjusted for GPS was 0.74 and for IMU 0.51. Plugging these values in `config/06_SensorNoise.txt` into `MeasuredStdDev_GPSPosXY` and `MeasuredStdDev_AccelXY` and running the scenario resulted in success.
+This resulted in adjusted standard deviations for __GPS of 0.74__, and for __IMU of 0.51__, thus very similar to the values in `SimulatedSensors.txt`.
+
+[ADD GIF HERE]
 
 
 ### Step 2: Attitude Estimation ###
@@ -121,11 +123,17 @@ In the screenshot above the attitude estimation using linear scheme (left) and u
 **Hint: see section 7.1.2 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj) for a refresher on a good non-linear complimentary filter for attitude using quaternions.**
 
 
-   __Response:__ I have implemented the equations layed out in 7.1.2 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj). I have created a quaterion `qt` from euler angles from current state estimates `rollEst`, `pitchEst`, `ekfState(6)` (for yaw). Next, i have created a quaternion `dq` from IMU measurements by integrating them first to obtain the measured roll, pitch, and yaw angles in body frame. Next i computed the predicted quaterion `q_bar` as follows:
+#### Step 2: Solution ####
 
-   __q_bar = dq * qt__
+I decided to implement the equation from section 7.1.2 of [Estimation for Quadrotors](https://www.overleaf.com/read/vymfngphcccj): __qt_bar = dq * qt__. 
 
-   and extracted the updated predicted roll, pitch, and yaw angles used for the complementary filter.
+`qt` is the rotation quaternion for the estimated state in world frame
+
+`dq` is the rotation quaternion since last update in body frame. Rotation angles were derived by integration of gyroscope measurements (e.g. `gyro.x * dtIMU`).
+
+`qt_bar` is the updated rotation quaterion for the estimated state, including the gyroscope measurements.
+
+Finally, I extracted the estimated roll, pitch, and yaw angles (in world frame) from `qt_bar` before applying the complementary filter for attitude estimation.
 
 
 ### Step 3: Prediction Step ###
@@ -139,6 +147,7 @@ In this next step you will be implementing the prediction step of your filter.
 2. In `QuadEstimatorEKF.cpp`, implement the state prediction step in the `PredictState()` functon. If you do it correctly, when you run scenario `08_PredictState` you should see the estimator state track the actual state, with only reasonably slow drift, as shown in the figure below:
 
 ![predict drift](images/predict-slow-drift.png)
+
 
 3. Now let's introduce a realistic IMU, one with noise.  Run scenario `09_PredictionCov`. You will see a small fleet of quadcopter all using your prediction code to integrate forward. You will see two plots:
    - The top graph shows 10 (prediction-only) position X estimates
@@ -170,6 +179,31 @@ Another set of bad examples is shown below for having a `QVelXYStd` too large (f
 ![bad vx cov small](images/bad-vx-sigma-low.PNG)
 
 ***Success criteria:*** *This step doesn't have any specific measurable criteria being checked.*
+
+
+#### Step 3: Solution ####
+
+The prediction step is broken down in several functions.
+
+The function `PredictState()` performs the state transition from previous to current estimate using control inputs (i.e., accelerometer measurments here). I implemented this step by rotating the accelerometer measuerments from body into world frame and subsequently integrating the accelerations in world frame to update state velocity (i.e. taking into account the effect of acceleration for z-axis velocity), and finally updated position by integrating the previous velocity state estimate. Using this update scheme shows satisfying performance, <0.1 deg deviation in scenario `08_PredictState` 
+
+[ADD GIF]
+
+
+The function `GetRbgPrime()` computes the partial derivative `RbgPrime` of the body-to-world rotation matrix `Rbg` with respect to yaw. I implemented this step using equation 71 from the paper by James Diebel. Representing attitude: Euler angles, unit quaternions, and rotation vectors. Matrix, 58 (15-16):1–35, 2006.
+
+
+The function `Predict()` finally performs the prediction step, using the `PredictState()` function to update the state `ekfState`, and the `GetRbgPrime()` function to compute the Jacobian for the Extended Kalman Filter (EKF) update of the state covariance `ekfCov`. Thus, I implemented the computation of the Jacobian `gPrime`, using `RbgPrime` and integration of accelerometer measurements and finally performed the EKF update using the following equation: __ekfCov = gPrime * ekfCov * gPrime.transpose() + Q__, where Q is the transition model covariance. 
+
+The resulting output in scenario `09_PredictionCov` captures the increasing covariance well:
+
+[ADD GIF]
+
+
+Finally, I tuned the process parameters and obtained the following result:
+
+[ADD GIF]
+
 
 
 ### Step 4: Magnetometer Update ###
