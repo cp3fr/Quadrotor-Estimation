@@ -270,8 +270,8 @@ In the `UpdateFromGPS()` function the state estimation of position and velocity 
 
 Subsequent tuning of `QPosZStd` = 0.15 and `QVelZStd` = 0.15 showed satisfying results:
 
-
-![Scenario_11](images/11.gif)
+__Scenario 11 after function implementation using default controller:__
+![Scenario_11](images/11_default.gif)
 
 
 ### Step 6: Adding Your Controller ###
@@ -289,12 +289,12 @@ Up to this point, we have been working with a controller that has been relaxed t
 ***Success criteria:*** *Your objective is to complete the entire simulation cycle with estimated position error of < 1m.*
 
 
-### Step 6: Solution ###
+### Step 6: Implementation ###
 
 Replacing `QuadController.cpp` and `QuadControlParmas.txt` with my code developed in the previous project immediately achieved the performance requirements:
 
-
-![Scenario_11](images/11.gif)
+__Scenario 11 using my controller from previous project:__
+![Scenario_11](images/11_mine.gif)
 
 
 
