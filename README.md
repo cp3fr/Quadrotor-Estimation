@@ -135,6 +135,8 @@ I decided to implement the equation from section 7.1.2 of [Estimation for Quadro
 
 Finally, I extracted the estimated roll, pitch, and yaw angles (in world frame) from `qt_bar` before applying the complementary filter for attitude estimation.
 
+![Solution 2](images/7.gif)
+
 
 ### Step 3: Prediction Step ###
 
