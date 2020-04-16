@@ -102,6 +102,9 @@ __SD_adjusted = abs(M) + SD__
 
 This resulted in adjusted standard deviations for __GPS = 0.74__, and for __IMU = 0.51__, thus very similar to the values in `SimulatedSensors.txt`.
 
+
+__Scenario 06 after sensor noise standard deviation estimation:__
+
 ![Scenario_06](images/6.gif)
 
 
@@ -138,6 +141,9 @@ __qt_bar = dq * qt__.
 `qt_bar` is the updated rotation quaterion for the estimated state, including the gyroscope measurements.
 
 Finally, I extracted the estimated roll, pitch, and yaw angles (in world frame) from `qt_bar` before applying the complementary filter for attitude estimation.
+
+
+__Scenario 07 after implementation of attitude estimation:__
 
 ![Scenario_07](images/7.gif)
 
@@ -194,15 +200,24 @@ The prediction step is broken down in several functions.
 The function `PredictState()` performs the state transition from previous to current estimate using control inputs (i.e., accelerometer measurments here). I implemented this step by rotating the accelerometer measuerments from body into world frame and subsequently integrating the accelerations in world frame to update state velocity (i.e. taking into account the effect of acceleration for z-axis velocity), and finally updated position by integrating the previous velocity state estimate. Using this update scheme shows satisfying performance, <0.1 deg deviation in scenario `08_PredictState` 
 
 
+__Scenario 08 after implementation of state prediction:__
+
 ![Scenario_08](images/8.gif)
 
 
 The function `GetRbgPrime()` computes the partial derivative `RbgPrime` of the body-to-world rotation matrix `Rbg` with respect to yaw. I implemented this step using equation 71 from the paper by James Diebel. Representing attitude: Euler angles, unit quaternions, and rotation vectors. Matrix, 58 (15-16):1–35, 2006.
 
 
-The function `Predict()` finally performs the prediction step, using the `PredictState()` function to update the state `ekfState`, and the `GetRbgPrime()` function to compute the Jacobian for the Extended Kalman Filter (EKF) update of the state covariance `ekfCov`. Thus, I implemented the computation of the Jacobian `gPrime`, using `RbgPrime` and integration of accelerometer measurements and finally performed the EKF update using the following equation: __ekfCov = gPrime * ekfCov * gPrime.transpose() + Q__, where Q is the transition model covariance. The resulting output in scenario `09_PredictionCov` captures the increasing covariance well.
+The function `Predict()` finally performs the prediction step, using the `PredictState()` function to update the state `ekfState`, and the `GetRbgPrime()` function to compute the Jacobian for the Extended Kalman Filter (EKF) update of the state covariance `ekfCov`. Thus, I implemented the computation of the Jacobian `gPrime`, using `RbgPrime` and integration of accelerometer measurements and finally performed the EKF update using the following equation: 
+
+__ekfCov = gPrime * ekfCov * gPrime.transpose() + Q__
+
+where Q is the transition model covariance. The resulting output in scenario `09_PredictionCov` captures the increasing covariance well.
 
 Finally, I tuned the process parameters `QPosXYStd` = 0.05 and `QVelXYStd` = 0.20, to obtain reasonable growth of covariances in `09_PredictionCov`:
+
+
+__Scenario 09 after implementation of covariance update:__
 
 ![Scenario_09](images/9.gif)
 
@@ -235,6 +250,8 @@ The function `UpdateFromMag()` uses the yaw angle in world frame from magnetomet
 
 After that, i tuned the `QYawStd` parameter to 0.08 to capture about 68% of the error covariance.
 
+
+__Scenario 10 after implementation of Magnetometer update:__
 
 ![Scenario_10](images/10.gif)
 
@@ -270,7 +287,9 @@ In the `UpdateFromGPS()` function the state estimation of position and velocity 
 
 Subsequent tuning of `QPosZStd` = 0.15 and `QVelZStd` = 0.15 showed satisfying results:
 
-__Scenario 11 after function implementation using default controller:__
+
+__Scenario 11 after implementation of GPS update using default controller:__
+
 ![Scenario_11](images/11_default.gif)
 
 
@@ -293,7 +312,9 @@ Up to this point, we have been working with a controller that has been relaxed t
 
 Replacing `QuadController.cpp` and `QuadControlParmas.txt` with my code developed in the previous project immediately achieved the performance requirements:
 
-__Scenario 11 using my controller from previous project:__
+
+__Scenario 11 after implementation of GPS update using own controller:__
+
 ![Scenario_11](images/11_mine.gif)
 
 
